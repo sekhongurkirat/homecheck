@@ -22,3 +22,21 @@ export async function fetchReport(
 
   return res.json();
 }
+
+export interface AddressSuggestion {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+export async function fetchAddressSuggestions(
+  query: string
+): Promise<AddressSuggestion[]> {
+  if (query.trim().length < 3) return [];
+
+  const params = new URLSearchParams({ q: query.trim() });
+  const res = await fetch(`/api/address/suggest?${params}`);
+
+  if (!res.ok) return [];
+  return res.json();
+}
