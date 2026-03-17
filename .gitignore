@@ -72,6 +72,7 @@ cython_debug/
 
 # ── Node / Next.js ────────────────────────────────────────────────────────────
 node_modules/
+*.tsbuildinfo
 .next/
 out/
 .vercel/
