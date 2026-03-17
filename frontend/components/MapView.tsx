@@ -99,7 +99,7 @@ export default function MapView({
       style: MAP_STYLE,
       center: [lng, lat],
       zoom: 14,
-      attributionControl: true,
+      attributionControl: { compact: true } as never,
     });
 
     mapRef.current = map;
