@@ -3,11 +3,6 @@ builder = "dockerfile"
 dockerfilePath = "backend/Dockerfile.prod"
 
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
-
-[env]
-DATABASE_URL = { default = "" }
-MAPBOX_TOKEN = { default = "" }
