@@ -156,7 +156,7 @@ export default function MapView({
           type: "geojson",
           data: {
             type: "Feature",
-            geometry: flag.geojson as GeoJSON.Geometry,
+            geometry: flag.geojson as unknown as GeoJSON.Geometry,
             properties: {
               status: flag.status,
               name: flag.name ?? flag.subcategory,
@@ -230,14 +230,15 @@ export default function MapView({
   // Fly to selected flag
   useEffect(() => {
     if (!mapRef.current || !selectedFlag) return;
-    const g = selectedFlag.geojson;
+    const g = selectedFlag.geojson as Record<string, unknown>;
     let center: [number, number] | null = null;
 
     if (g.type === "Point") {
-      center = g.coordinates as [number, number];
+      center = (g.coordinates as number[]).slice(0, 2) as [number, number];
     } else if (g.type === "LineString") {
-      const mid = Math.floor(g.coordinates.length / 2);
-      center = g.coordinates[mid] as [number, number];
+      const coords = g.coordinates as number[][];
+      const mid = Math.floor(coords.length / 2);
+      center = coords[mid] as [number, number];
     }
 
     if (center) {
