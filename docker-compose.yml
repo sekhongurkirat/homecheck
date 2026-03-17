@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: homecheck_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: homecheck
+      POSTGRES_PASSWORD: homecheck_secret
+      POSTGRES_DB: homecheck
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homecheck -d homecheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: homecheck_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://homecheck:homecheck_secret@db:5432/homecheck
+      MAPBOX_TOKEN: ${MAPBOX_TOKEN:-}
+      GREATSCHOOLS_API_KEY: ${GREATSCHOOLS_API_KEY:-}
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  pipeline:
+    image: ghcr.io/osgeo/gdal:ubuntu-small-3.6.3
+    container_name: homecheck_pipeline
+    profiles:
+      - pipeline
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://homecheck:homecheck_secret@db:5432/homecheck
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    entrypoint: ["bash", "/app/pipeline/run_ingest.sh"]
+
+volumes:
+  pgdata:

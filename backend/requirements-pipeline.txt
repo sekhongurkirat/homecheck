@@ -1,0 +1,13 @@
+# Pipeline-only dependencies (requires GDAL system libraries)
+# Run the pipeline using: docker compose run pipeline python -m pipeline.ingest.osm_ingest
+# Or install on a machine that already has GDAL: pip install -r requirements-pipeline.txt
+geopandas==0.14.4
+fiona==1.9.6
+shapely==2.0.4
+pyproj==3.6.1
+asyncpg==0.29.0
+httpx==0.27.0
+python-dotenv==1.0.1
+requests==2.32.2
+openpyxl==3.1.2
+aiohttp==3.9.5
