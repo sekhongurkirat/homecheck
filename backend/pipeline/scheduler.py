@@ -71,7 +71,10 @@ async def main() -> None:
 
     # Stagger initial runs by a few minutes so they don't all slam resources at once.
     async def osm():
-        await osm_ingest.run()
+        # Austin TX
+        await osm_ingest.run("30.098,-97.938,30.516,-97.474")
+        # Atlanta GA
+        await osm_ingest.run("33.55,-84.65,34.05,-84.15")
 
     async def epa():
         await asyncio.sleep(5 * 60)   # start 5 min after OSM

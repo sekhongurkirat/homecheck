@@ -7,6 +7,8 @@ import { fetchAddressSuggestions, type AddressSuggestion } from "@/lib/api";
 const EXAMPLE_ADDRESSES = [
   "2201 N Lamar Blvd, Austin TX 78705",
   "3900 Parmer Ln, Austin TX 78727",
+  "200 Peachtree St NE, Atlanta GA 30303",
+  "1280 W Peachtree St NW, Atlanta GA 30309",
 ];
 
 const FEATURES = [
