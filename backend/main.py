@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import connect, disconnect
+from routes.address import router as address_router
 from routes.report import router as report_router
 
 logging.basicConfig(
@@ -43,6 +44,7 @@ app.add_middleware(
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(address_router, prefix="/api")
 app.include_router(report_router, prefix="/api")
 
 

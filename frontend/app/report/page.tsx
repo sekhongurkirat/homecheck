@@ -30,7 +30,7 @@ function StreetViewModal({
   onClose: () => void;
 }) {
   const src = `https://www.google.com/maps/embed/v1/streetview?key=${
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "YOUR_GOOGLE_MAPS_KEY"
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? ""
   }&location=${lat},${lng}&fov=80&heading=0&pitch=0`;
 
   return (
@@ -177,13 +177,15 @@ function ReportContent() {
                 <span className="text-slate-500">·</span>
                 <span className="text-purple-400">{devCount} development</span>
               </span>
-              <button
-                onClick={() => setShowStreetView(true)}
-                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200
-                           px-3 py-1.5 rounded-lg transition"
-              >
-                Street View
-              </button>
+              {process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY && (
+                <button
+                  onClick={() => setShowStreetView(true)}
+                  className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200
+                             px-3 py-1.5 rounded-lg transition"
+                >
+                  Street View
+                </button>
+              )}
             </>
           )}
         </div>

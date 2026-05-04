@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { fetchAddressSuggestions, type AddressSuggestion } from "@/lib/api";
 
 const EXAMPLE_ADDRESSES = [
   "2201 N Lamar Blvd, Austin TX 78705",
   "3900 Parmer Ln, Austin TX 78727",
+  "200 Peachtree St NE, Atlanta GA 30303",
+  "1280 W Peachtree St NW, Atlanta GA 30309",
 ];
 
 const FEATURES = [
@@ -43,6 +46,62 @@ export default function HomePage() {
   const router = useRouter();
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    const results = await fetchAddressSuggestions(query);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0);
+    setActiveIndex(-1);
+  }, []);
+
+  function handleInputChange(value: string) {
+    setAddress(value);
+    if (error) setError("");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
+  }
+
+  function selectSuggestion(suggestion: AddressSuggestion) {
+    setAddress(suggestion.address);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i < suggestions.length - 1 ? i + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i > 0 ? i - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[activeIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  }
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,6 +111,7 @@ export default function HomePage() {
       return;
     }
     setError("");
+    setShowSuggestions(false);
     const params = new URLSearchParams({ address: trimmed });
     router.push(`/report?${params.toString()}`);
   }
@@ -59,6 +119,8 @@ export default function HomePage() {
   function handleExample(example: string) {
     setAddress(example);
     setError("");
+    setSuggestions([]);
+    setShowSuggestions(false);
   }
 
   return (
@@ -92,21 +154,61 @@ export default function HomePage() {
           {/* Search card */}
           <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-2xl">
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                id="address-input"
-                type="text"
-                value={address}
-                onChange={(e) => {
-                  setAddress(e.target.value);
-                  if (error) setError("");
-                }}
-                placeholder="123 Main St, Austin, TX 78701"
-                className="w-full px-4 py-3.5 rounded-xl bg-slate-900 text-white placeholder-slate-500
-                           border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500
-                           focus:border-transparent text-base transition"
-                autoComplete="street-address"
-                autoFocus
-              />
+              <div ref={wrapperRef} className="relative">
+                <input
+                  id="address-input"
+                  type="text"
+                  value={address}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (suggestions.length > 0) setShowSuggestions(true);
+                  }}
+                  placeholder="123 Main St, Austin, TX 78701"
+                  className="w-full px-4 py-3.5 rounded-xl bg-slate-900 text-white placeholder-slate-500
+                             border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500
+                             focus:border-transparent text-base transition"
+                  autoComplete="off"
+                  autoFocus
+                  role="combobox"
+                  aria-expanded={showSuggestions}
+                  aria-autocomplete="list"
+                  aria-controls="address-suggestions"
+                  aria-activedescendant={activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined}
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul
+                    id="address-suggestions"
+                    role="listbox"
+                    className="absolute z-50 left-0 right-0 mt-1 bg-slate-800 border border-slate-600
+                               rounded-xl overflow-hidden shadow-2xl"
+                  >
+                    {suggestions.map((s, i) => (
+                      <li
+                        key={i}
+                        id={`suggestion-${i}`}
+                        role="option"
+                        aria-selected={i === activeIndex}
+                        className={`px-4 py-3 text-sm cursor-pointer transition-colors duration-100
+                          ${i === activeIndex
+                            ? "bg-blue-600 text-white"
+                            : "text-slate-200 hover:bg-slate-700"
+                          }`}
+                        onMouseDown={() => selectSuggestion(s)}
+                        onMouseEnter={() => setActiveIndex(i)}
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S2 17.642 2 10.5a8 8 0 0117 0z" />
+                          </svg>
+                          {s.address}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               {error && (
                 <p className="text-red-400 text-sm -mt-1">{error}</p>
               )}

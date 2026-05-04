@@ -47,6 +47,27 @@ CREATE INDEX IF NOT EXISTS idx_flood_zones_zone_code
     ON flood_zones (zone_code);
 
 -- ---------------------------------------------------------------------------
+-- future_development
+-- MUD districts and bond issuances for development proximity queries.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS future_development (
+    id              BIGSERIAL PRIMARY KEY,
+    dev_type        TEXT    NOT NULL,       -- 'mud_district', 'bond_issuance'
+    name            TEXT,
+    status          TEXT,
+    formed_year     INT,
+    last_bond_year  INT,
+    bond_amount_usd BIGINT,
+    geom            GEOMETRY(Geometry, 4326) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_future_development_geom
+    ON future_development USING GIST (geom);
+
+CREATE INDEX IF NOT EXISTS idx_future_development_dev_type
+    ON future_development (dev_type);
+
+-- ---------------------------------------------------------------------------
 -- zoning
 -- Municipal zoning boundaries.
 -- ---------------------------------------------------------------------------

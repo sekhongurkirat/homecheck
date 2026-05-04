@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime
 from typing import Any
 
 import databases
@@ -38,7 +39,7 @@ def _classify(
     distance_m: float,
     formed_year: int | None,
     last_bond_year: int | None,
-    current_year: int = 2026,
+    current_year: int | None = None,
 ) -> str:
     """
     Return 'red', 'yellow', or 'green' based on proximity and recency.
@@ -57,6 +58,9 @@ def _classify(
     -----
     - Everything else within the search radius
     """
+    if current_year is None:
+        current_year = datetime.now().year
+
     if dev_type == "mud_district":
         age = (current_year - formed_year) if formed_year is not None else 9999
         if age <= _RED_MUD_AGE_YEARS and distance_m <= _RED_DISTANCE_M:

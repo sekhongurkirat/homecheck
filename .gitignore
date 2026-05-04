@@ -9,8 +9,8 @@ dist/
 build/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -72,6 +72,7 @@ cython_debug/
 
 # ── Node / Next.js ────────────────────────────────────────────────────────────
 node_modules/
+*.tsbuildinfo
 .next/
 out/
 .vercel/
